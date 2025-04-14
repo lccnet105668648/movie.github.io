@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -231,31 +232,26 @@
                         <div class="panel">
                             <div class="panel-body">
                                 <div class="row">
-                                    <div class="col-md-2 col-sm-3 col-xs-3">
-                                        <div class="abordered-class text-center">
-                                            <div class="c-bg">
-                                                <h4>12+</h4>
-                                            </div>
-                                            <div><h5>輔12級</h5></div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-9 col-lg-7 col-md-6 col-xs-9">
-                                        <h3><strong>{{ showtime.movie.title }}</strong></h3>
-                                        <p>{{ showtime.movie.title }}</p>
+
+                                    <div class="col-sm-9 col-lg-7 col-md-6 col-xs-9" style="font-size: 1.2em; font-weight: bold;">
+                                        <h3><strong>{{ movie.title }}</strong></h3>
+                                        <p>場次時間：{{ showtime.show_date.date }} {{ showtime.time }}</p>
+                                        <p>電影院：{{ showtime.show_date.theater.name }}</p>
                                     </div>
                                     <div class="col-sm-12 col-lg-3 col-md-4 col-xs-12">
-                                        <div class="body">
-                                            <p class="text-primary"><i class="fa fa-clock-o pr-10"></i> 
-                                                {{ showtime.start_time|date:"Y/m/d（D） H:i" }}
+                                        <div class="body text-center">
+                                            {% if movie.poster_url %}
+                                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" style="width: 100px; height: auto; border-radius: 8px;">
+                                            {% else %}
+                                                <p>暫無圖片</p>
+                                            {% endif %}
+                                            <p class="text-primary mt-2" style="font-size: 1.2em; font-weight: bold;">
+                                                {{ movie.title }}
                                             </p>
-                                            <p class="text-primary"><i class="fa fa-location-arrow pr-10"></i> 
-                                                {{ showtime.theater.name }}
-                                            </p>
-                                            <p class="text-primary"><i class="fa fa-video-camera pr-10"></i> 
-                                                第A區
-                                            </p>
+                                            <p>{{ movie.description }}</p>
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -455,9 +451,10 @@
                                     <p>尚未登入</p>
                                     <p class="text-primary"><i class="fa fa-info-circle me-1"></i> <strong>請立即登入會員</strong></p>
                                     <p>儲值金消費享會員票價及餐飲優惠</p>
-                                    <button type="button" class="btn btn-primary btn-member-login" onclick=window.location.href="{% url 'tickets:login' %}">
+                                    <a href="{% url 'tickets:login' %}" class="btn btn-primary btn-member-login">
                                         <i class="fa fa-sign-in-alt me-2"></i> 會員登入
-                                    </button>
+                                    </a>
+
                                 </div>
                             </div>
                             
@@ -509,145 +506,121 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM 已載入，準備初始化購票功能");
 
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("📢 開始更新電影資訊...");
-        
-            // **獲取 Django 傳入的數據**
-            const movieTitle = "{{ showtime.movie.title }}";
-            const theaterName = "{{ showtime.theater.name }}";
-            const showDate = "{{ showtime.start_time|date:'Y-m-d' }}";
-            const showTime = "{{ showtime.start_time|time:'H:i' }}";
-        
-            console.log("🎬 Django 取得的數據:", movieTitle, theaterName, showDate, showTime);
-        
-            // **更新 Local Storage**
-            localStorage.setItem('selectedMovie', movieTitle);
-            localStorage.setItem('selectedLocation', theaterName);
-            localStorage.setItem('selectedDate', showDate);
-            localStorage.setItem('selectedTime', showTime);
-        
-            // **更新 HTML 內容**
-            document.querySelector('h3 strong').textContent = movieTitle;
-            document.querySelector('.text-primary i.fa-clock-o').parentNode.innerHTML = 
-                `<i class="fa fa-clock-o pr-10"></i> ${showDate} ${showTime}`;
-            document.querySelector('.text-primary i.fa-location-arrow').parentNode.innerHTML = 
-                `<i class="fa fa-location-arrow pr-10"></i> ${theaterName}`;
-        
-            console.log("✅ 更新完成！", localStorage);
-        
-            // **添加數量調整事件監聽**
-            document.querySelectorAll('.quantity-buttons').forEach(container => {
-                const decrementBtn = container.querySelector('.decrement');
-                const incrementBtn = container.querySelector('.increment');
-                const quantityDisplay = container.querySelector('.quantity-display');
-        
-                decrementBtn.addEventListener('click', function() {
-                    let quantity = parseInt(quantityDisplay.textContent);
-                    if (quantity > 0) {
-                        quantity--;
-                        quantityDisplay.textContent = quantity;
-                        updateTotals();
-                    }
-                });
-        
-                incrementBtn.addEventListener('click', function() {
-                    let quantity = parseInt(quantityDisplay.textContent);
-                    if (quantity < 10) {
-                        quantity++;
-                        quantityDisplay.textContent = quantity;
-                        updateTotals();
-                    }
-                });
-            });
-        
-            // **更新總價**
+            const totalPriceDisplay = document.getElementById('spTotalPrice');
+            const cartItems = document.getElementById('cartItems');
+            const nextButton = document.getElementById('btnDoNext');
+
             function updateTotals() {
                 let totalPrice = 0;
                 let totalTickets = 0;
-                const cartItems = document.getElementById('cartItems');
-                cartItems.innerHTML = ''; // 清空購物清單
-        
-                document.querySelectorAll('.panel tr').forEach(row => {
-                    const quantityElement = row.querySelector('.quantity-display');
-                    const priceElement = row.querySelector('.realprice');
-                    const totalElement = row.querySelector('.ticket-total');
-                    const ticketName = row.querySelector('.fw-bold')?.textContent || '電影票';
-        
-                    if (priceElement && quantityElement && totalElement) {
-                        const quantity = parseInt(quantityElement.textContent);
-                        const price = parseInt(priceElement.textContent.replace(/,/g, ''));
-        
-                        if (quantity > 0) {
-                            const itemTotal = price * quantity;
-                            totalElement.textContent = itemTotal.toLocaleString();
-                            totalPrice += itemTotal;
-                            totalTickets += quantity;
-        
-                            // **添加購物車項目**
-                            const cartItem = document.createElement('tr');
-                            cartItem.innerHTML = `
-                                <td>${ticketName}</td>
-                                <td>${quantity}</td>
-                                <td>${itemTotal.toLocaleString()}</td>
-                            `;
-                            cartItems.appendChild(cartItem);
-                        } else {
-                            totalElement.textContent = '0';
-                        }
+                cartItems.innerHTML = ''; // 清空購物車
+
+                document.querySelectorAll('.panel .quantity-buttons').forEach(container => {
+                    const quantityEl = container.querySelector('.quantity-display');
+                    const row = container.closest('tr');
+                    const priceEl = row?.querySelector('.realprice');
+                    const totalEl = row?.querySelector('.ticket-total');
+                    const nameEl = row?.querySelector('.fw-bold');
+
+                    if (!quantityEl || !priceEl || !totalEl) return;
+
+                    const quantity = parseInt(quantityEl.textContent);
+                    const price = parseInt(priceEl.textContent.replace(/,/g, ''));
+                    const ticketName = nameEl?.textContent || '電影票';
+
+                    if (quantity > 0) {
+                        const itemTotal = quantity * price;
+                        totalPrice += itemTotal;
+                        totalTickets += quantity;
+                        totalEl.textContent = itemTotal.toLocaleString();
+
+                        const cartRow = document.createElement('tr');
+                        cartRow.innerHTML = `<td>${ticketName}</td><td>${quantity}</td><td>${itemTotal.toLocaleString()}</td>`;
+                        cartItems.appendChild(cartRow);
+                    } else {
+                        totalEl.textContent = '0';
                     }
                 });
-        
-                // **更新餐飲項目**
+
                 document.querySelectorAll('.card').forEach(card => {
-                    const quantityElement = card.querySelector('.quantity-display');
-                    const priceElement = card.querySelector('.text-danger');
-                    const itemName = card.querySelector('h5')?.textContent || '餐飲';
-        
-                    if (priceElement && quantityElement) {
-                        const quantity = parseInt(quantityElement.textContent);
-                        const price = parseInt(priceElement.textContent.replace('$', ''));
-        
-                        if (quantity > 0 && !isNaN(price)) {
-                            totalPrice += price * quantity;
-        
-                            // **添加購物車項目**
-                            const cartItem = document.createElement('tr');
-                            cartItem.innerHTML = `
-                                <td>${itemName}</td>
-                                <td>${quantity}</td>
-                                <td>${(price * quantity).toLocaleString()}</td>
-                            `;
-                            cartItems.appendChild(cartItem);
-                        }
+                    const quantityEl = card.querySelector('.quantity-display');
+                    const priceEl = card.querySelector('.text-danger');
+                    const nameEl = card.querySelector('h5');
+
+                    if (!quantityEl || !priceEl) return;
+
+                    const quantity = parseInt(quantityEl.textContent);
+                    const price = parseInt(priceEl.textContent.replace('$', ''));
+                    const itemName = nameEl?.textContent || '餐點';
+
+                    if (quantity > 0 && !isNaN(price)) {
+                        const itemTotal = quantity * price;
+                        totalPrice += itemTotal;
+
+                        const cartRow = document.createElement('tr');
+                        cartRow.innerHTML = `<td>${itemName}</td><td>${quantity}</td><td>${itemTotal.toLocaleString()}</td>`;
+                        cartItems.appendChild(cartRow);
                     }
                 });
-        
-                // **更新總價顯示**
-                document.getElementById('spTotalPrice').textContent = totalPrice.toLocaleString();
-        
-                // **啟用或禁用「繼續」按鈕**
-                const nextButton = document.getElementById('btnDoNext');
+
+                totalPriceDisplay.textContent = totalPrice.toLocaleString();
+
                 if (totalTickets > 0) {
                     nextButton.classList.remove('disabled');
                 } else {
                     nextButton.classList.add('disabled');
                 }
-                document.getElementById('btnDoNext').addEventListener('click', function(event) {
-                    event.preventDefault();  // 阻止預設的跳轉行為
-                
-                    let totalPrice = document.getElementById('spTotalPrice').textContent.replace(/,/g, ''); // 取得總價
-                    totalPrice = parseInt(totalPrice) || 0; // 確保是數字
-                
-                    let nextPageUrl = new URL("/tickets/select_seats/1/", window.location.origin);
-                    nextPageUrl.searchParams.set('total_price', totalPrice); // 把 totalPrice 加入 URL
-                
-                    console.log("🔹 跳轉並傳遞 total_price:", totalPrice);
-                    
-                    window.location.href = nextPageUrl.toString(); // 跳轉到座位選擇頁面
-                });
+
             }
+
+            document.body.addEventListener('click', function (e) {
+                if (e.target.closest('.increment')) {
+                    const display = e.target.closest('.quantity-buttons').querySelector('.quantity-display');
+                    let quantity = parseInt(display.textContent);
+                    if (quantity < 10) {
+                        display.textContent = quantity + 1;
+                        updateTotals();
+                    }
+                }
+
+                if (e.target.closest('.decrement')) {
+                    const display = e.target.closest('.quantity-buttons').querySelector('.quantity-display');
+                    let quantity = parseInt(display.textContent);
+                    if (quantity > 0) {
+                        display.textContent = quantity - 1;
+                        updateTotals();
+                    }
+                }
+            });
+
+            nextButton.addEventListener('click', function (e) {
+                if (nextButton.classList.contains('disabled')) {
+                    console.log("按鈕被禁用，不能跳轉");
+                    e.preventDefault();
+                    return;
+                }
+
+                e.preventDefault();
+                const total = parseInt(totalPriceDisplay.textContent.replace(/,/g, '')) || 0;
+                const currentUrl = window.location.href;
+                const match = currentUrl.match(/select_tickets\/(\d+)\//);
+                const showtimeId = match ? match[1] : "1";
+
+                const nextUrl = new URL(`/tickets/select_seats/${showtimeId}/`, window.location.origin);
+                nextUrl.searchParams.set('total_price', total);
+
+                console.log("跳轉至座位頁 with total_price:", total);
+                window.location.href = nextUrl.toString();
+            });
+
+
+            updateTotals();
         });
-    </script>
+
+        </script>
+
 </body>
 </html>

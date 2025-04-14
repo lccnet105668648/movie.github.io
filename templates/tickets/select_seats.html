@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>選擇座位</title>
@@ -236,29 +237,31 @@
                 <div class="col-lg-8">
                   <div class="panel">
                     <div class="panel-body">
-                      <div class="row">
-                        <div class="col-md-2 col-sm-3 col-xs-3">
-                          <div class="abordered-class text-center">
-                            <div class="c-bg"><h4>12+</h4></div>
-                            <div><h5>輔12級</h5></div>
-                          </div>
+                        <div class="row">
+
+                            <div class="col-sm-9 col-lg-7 col-md-6 col-xs-9" style="font-size: 1.2em; font-weight: bold;">
+                                <h3><strong>{{ movie.title }}</strong></h3>
+                                <p>場次時間：{{ showtime.show_date.date }} {{ showtime.time }}</p>
+                                <p>電影院：{{ showtime.show_date.theater.name }}</p>
+                            </div>
+                            <div class="col-sm-12 col-lg-3 col-md-4 col-xs-12">
+                                <div class="body text-center">
+                                    {% if movie.poster_url %}
+                                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" style="width: 100px; height: auto; border-radius: 8px;">
+                                    {% else %}
+                                        <p>暫無圖片</p>
+                                    {% endif %}
+                                    <p class="text-primary mt-2" style="font-size: 1.2em; font-weight: bold;">
+                                        {{ movie.title }}
+                                    </p>
+                                    <p>{{ movie.description }}</p>
+                                </div>
+                            </div>
+
                         </div>
-                        <div class="col-sm-9 col-lg-7 col-md-6 col-xs-9">
-                          <h3><strong>{{ showtime.movie.title }}</strong></h3>
-                          <p>{{ showtime.movie.title }}</p>
-                        </div>
-                        <div class="col-sm-12 col-lg-3 col-md-4 col-xs-12">
-                          <div class="body">
-                            <p class="text-primary"><i class="fa fa-clock-o pr-10"></i> {{ showtime.start_time|date:"Y/m/d（D） H:i" }}</p>
-                            <p class="text-primary"><i class="fa fa-location-arrow pr-10"></i> {{ showtime.theater.name }}</p>
-                            <p class="text-primary"><i class="fa fa-video-camera pr-10"></i> 第A區</p>
-                          </div>
-                        </div>
-                      </div> <!-- 結束 row -->
-                    </div> <!-- 結束 panel-body -->
-                  </div> <!-- 結束 panel -->
-                </div> <!-- 結束 col-lg-8 -->
-          
+                    </div>
+                </div>
+
                 <!-- 右側側邊欄（會員+購物清單） -->
                 <div class="col-lg-4">
                   <div class="position-sticky" style="top: 20px; z-index: 10;">
@@ -271,9 +274,9 @@
                         <p>尚未登入</p>
                         <p class="text-primary"><i class="fa fa-info-circle me-1"></i> <strong>請立即登入會員</strong></p>
                         <p>儲值金消費享會員票價及餐飲優惠</p>
-                        <a href="{% url 'tickets:login' %}?next={{ request.get_full_path }}" class="btn btn-primary btn-member-login w-100 mt-2">
-                            <i class="fa fa-sign-in-alt me-2"></i> 會員登入
-                          </a>
+                        <button type="button" class="btn btn-primary btn-member-login w-100 mt-2"  onclick=window.location.href="{% url 'tickets:login' %}>
+                          <i class="fa fa-sign-in-alt me-2"></i> 會員登入
+                        </button>
                       </div>
                     </div>
           
@@ -301,7 +304,9 @@
                             </tr>
                           </tfoot>
                         </table>
-                        
+                        <button type="button" class="btn btn-info btn-confirm-order w-100 mt-2">
+                          <i class="fa fa-check-circle me-2"></i> 確認訂單
+                        </button>
                       </div>
                     </div>
                   </div> <!-- 結束 sticky 區塊 -->
@@ -319,8 +324,7 @@
         <div class="card-body">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h5 class="mb-1">{{ showtime.movie.title }}</h5>
-                    <p class="mb-0"><i class="bi bi-building"></i> {{ showtime.theater.name }} - {{ showtime.start_time|date:"Y年m月d日 H:i" }}</p>
+                    <h5 class="mb-1">{{ movie.title }}</h5>
                 </div>
             </div>
         </div>
@@ -347,24 +351,23 @@
 </div>
 <div id="showtime-id" data-showtime-id="{{ showtime.id }}"></div>
 <table class="seat-table">
-    <tbody>
-        {% for row, seats in seat_rows %}
-        <tr>
-            <td class="row-label">{{ row }}</td>
-            {% for seat in seats %}
-            <td class="seat-cell" {% if seat.status == 'sold' %}bg-danger{% endif %}"
-                data-seat-id="{{ seat.id }}"
-                data-status="{{ seat.status }}">
-                <input type="checkbox"
-                       class="seat-checkbox"
-                       {% if seat.status == 'sold' %}disabled{% endif %}
-                       {% if seat.status == 'selected' %}checked{% endif %}>
-            </td>
-            {% endfor %}
-        </tr>
+  <tbody>
+    {% for row_label, seats in seat_map.items %}
+      <tr>
+        <td class="row-label">{{ row_label }}</td>
+        {% for seat in seats %}
+          <td data-seat-id="{{ seat.id }}" data-status="available">
+            <label>
+              <input type="checkbox" class="seat-checkbox" style="display:none;">
+              <img src="/static/img/standard_available.png" alt="seat">
+            </label>
+          </td>
         {% endfor %}
-    </tbody>
+      </tr>
+    {% endfor %}
+  </tbody>
 </table>
+
 
 
 <div class="card mb-4 summary-card {% if user_reserved_seats %}has-selections{% endif %}">
@@ -383,10 +386,10 @@
             <div class="col-md-4 text-end">
                 <h5 class="mb-3">總價: NT$ <span id="total-price">{{total_price|default:0  }}</span></h5>
                 <button id="proceed-btn" class="btn btn-success btn-lg"
-            data-logged-in="{{ is_logged_in|yesno:'true,false' }}">
-            <i class="bi bi-cart-check"></i> 確認訂單
-</button>
-
+                    data-logged-in="{{ is_logged_in|yesno:'true,false' }}"
+                        {% if not user_reserved_seats %}disabled{% endif %}>
+                    <i class="bi bi-cart-check"></i> 確認訂單
+                </button>
 
             </div>
             
@@ -409,40 +412,31 @@
     
         seats.forEach(seat => {
             seat.addEventListener("change", function () {
-                // ✅ 如果被選中，先取消其他已選的
-                if (this.checked) {
-                    seats.forEach(other => {
-                        if (other !== this) {
-                            other.checked = false;
-                        }
-                    });
-                }
-        
-                // 以下原本的邏輯照舊
-                let seatCell = this.parentElement;
-                let seatId = seatCell.dataset.seatId;
+                let seatCell = this.parentElement;  // 父層 `td`
+                let seatId = seatCell.dataset.seatId;  // `td` 的 `data-seat-id`
                 let isSold = seatCell.dataset.status === "sold";
-        
+    
                 if (!seatId) {
                     console.error("缺少座位 ID，請檢查 HTML 結構");
                     return;
                 }
-        
+    
                 if (isSold) {
                     console.warn("這個座位已售出，無法選擇");
-                    return;
+                    return; 
                 }
-        
-                let isSelected = this.checked;
-        
+    
+                let isSelected = this.checked;  // 是否勾選
+    
+                // 送出 AJAX 更新座位狀態
                 fetch(`/tickets/api/select_seat/`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken")
+                        "X-CSRFToken": getCookie("csrftoken") // Django CSRF 防護
                     },
                     body: JSON.stringify({
-                        showtime_id: showtimeId,
+                        showtime_id: showtimeId,  // 傳送場次 ID
                         seat_id: seatId,
                         action: isSelected ? "select" : "cancel"
                     })
@@ -451,11 +445,10 @@
                 .then(data => {
                     if (!data.success) {
                         alert("座位選擇失敗：" + data.message);
-                        this.checked = !this.checked;
+                        this.checked = !this.checked; // 取消勾選
                     }
                 })
                 .catch(error => console.error("選擇座位時發生錯誤:", error));
-        
                 updateSelectedCount();
                 updateAvailableCount();
             });
@@ -513,16 +506,13 @@
     
         if (!isLoggedIn) {
             alert("請先登入才能確認訂單");
-            window.location.href = "/tickets/login/?next=" + window.location.pathname + window.location.search;
+            window.location.href = "/accounts/login/?next=" + window.location.pathname;
             return;
         }
     
-            // 已登入，跳轉到付款頁面
-            const showtimeId = {{ showtime.id }};
-            const totalPrice = {{ total_price|default:0 }};
-            
-            // 這裡使用付款頁面，並將訂單總價參數傳遞過去
-            window.location.href = `/tickets/payment/${showtimeId}/?total_price=${totalPrice}`;
+        // ✅ 如果已登入，才執行送出動作（或跳轉）
+        // 這裡可以 redirect 到 order_summary 或呼叫 confirm API
+        window.location.href = "/tickets/order_summary/";
     });
 </script>
 

@@ -7,22 +7,19 @@
     <title>{% block title %}電影購票系統{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/index.css' %}">
-    
-    
 </head>
 <body>
     <!-- 導覽列 -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/tickets">電影購票系統</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <a class="navbar-brand" href="/">電影購票系統</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tickets:login'%}">訂票查詢</a>
+                        <a class="nav-link" href="/tickets/booking_history/">訂票查詢</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/tickets/openInfo/">正在上映</a>  <!-- 修改為 openInfo -->
@@ -36,29 +33,14 @@
                         </li>
                         {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:member_index' %}">首頁</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:my_orders' %}">訂單查詢</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                會員專區
-                            </a>
-                            <ul class="dropdown-menu " aria-labelledby="navbarDropdown">
-                              <li><a class="dropdown-item" href="{% url 'tickets:member_data'%}">會員資料</a></li>
-                              <li><a class="dropdown-item border-0" href="{% url 'tickets:change_password'%}">修改密碼</a></li>
-                            </ul>
-                          </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:logout' %}">登出</a>
+                            <a class="nav-link" href="/logout/">登出</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:login' %}">登入</a>
+                            <a class="nav-link" href="/login/">登入</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'tickets:register' %}">註冊</a>
+                            <a class="nav-link" href="/register/">註冊</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -75,6 +57,13 @@
             <div class="searchContent">
                 <section id="searchBox1" style="display: block;" class="searchGroup">
                     <form class="bookGroup">
+                        <!-- 載入動畫區塊 -->
+                        <div id="loading-spinner" style="display: none; text-align: center; margin-top: 1rem;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">載入中...</span>
+                            </div>
+                            <p class="text-muted">正在取得場次資料，請稍候...</p>
+                        </div>
                         <ul>
                             <!-- 影城選擇 -->
                             <li>
@@ -102,7 +91,7 @@
                                 <span class="icon-schedule"></span>
                                 <select name="session" id="session-select" class="validate[required]">
                                     <option value="">請選擇場次</option>
-                                </select>
+     ~!q                           </select>
                             </li>
                         </ul>
                         <!-- 訂票按鈕 -->
@@ -136,84 +125,114 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- 動態載入影城、電影、日期、場次 -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", () => {
             const cinemaSelect = document.getElementById("cinema-select");
             const movieSelect = document.getElementById("movie-select");
             const dateSelect = document.getElementById("date-select");
             const sessionSelect = document.getElementById("session-select");
             const bookButton = document.getElementById("book-button");
+            const loadingSpinner = document.getElementById("loading-spinner");
 
-            // **動態載入影城**
-            fetch("/tickets/api/theaters/")
-                .then(response => response.json())
-                .then(data => {
-                    cinemaSelect.innerHTML = `<option value="">請選擇影城</option>`;
-                    data.theaters.forEach(theater => {
-                        cinemaSelect.innerHTML += `<option value="${theater.id}">${theater.name}</option>`;
-                    });
-                })
-                .catch(error => console.error("載入影城失敗：", error));
+            const toggleLoading = (visible) => {
+                loadingSpinner.style.display = visible ? "block" : "none";
+            };
 
-            // **影城變更時，載入電影**
-            cinemaSelect.addEventListener("change", function() {
-                const theaterId = this.value;
+            const fetchData = async (url, onSuccess, onError) => {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    onSuccess(data);
+                } catch (err) {
+                    console.error("Fetch failed:", err);
+                    if (onError) onError(err);
+                    alert("資料載入失敗，請稍後再試！");
+                }
+            };
+
+            const populateSelect = (selectEl, defaultText, items, valueKey, textKey) => {
+                selectEl.innerHTML = `<option value="">${defaultText}</option>`;
+                items.forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item[valueKey];
+                    option.textContent = item[textKey];
+                    selectEl.appendChild(option);
+                });
+            };
+
+            // 取得電影院清單
+            fetchData("/tickets/api/theaters/", data => {
+                populateSelect(cinemaSelect, "請選擇影城", data.theaters, "id", "name");
+            });
+
+            // 影城選擇後：重設 + 抓取電影
+            cinemaSelect.addEventListener("change", () => {
+                const theaterId = cinemaSelect.value;
                 if (!theaterId) return;
 
-                fetch(`/tickets/api/movies/${theaterId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        movieSelect.innerHTML = `<option value="">請選擇電影</option>`;
-                        data.movies.forEach(movie => {
-                            movieSelect.innerHTML += `<option value="${movie.id}">${movie.title}</option>`;
-                        });
-                    })
-                    .catch(error => console.error("載入電影失敗：", error));
+                movieSelect.innerHTML = `<option value="">請選擇電影</option>`;
+                dateSelect.innerHTML = `<option value="">請選擇日期</option>`;
+                sessionSelect.innerHTML = `<option value="">請選擇場次</option>`;
+                bookButton.disabled = true;
+
+                fetchData(`/tickets/api/movies/${theaterId}/`, data => {
+                    populateSelect(movieSelect, "請選擇電影", data.movies, "id", "title");
+                });
             });
 
-            // **電影變更時，載入可選日期**
-            movieSelect.addEventListener("change", function() {
-                const movieId = this.value;
-                if (!movieId) return;
-
-                fetch(`/tickets/api/dates/${movieId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        dateSelect.innerHTML = `<option value="">請選擇日期</option>`;
-                        data.dates.forEach(date => {
-                            dateSelect.innerHTML += `<option value="${date}">${date}</option>`;
-                        });
-                    })
-                    .catch(error => console.error("載入日期失敗：", error));
-            });
-
-            // **日期變更時，載入場次**
-            dateSelect.addEventListener("change", function() {
+            // 電影選擇後：抓取對應日期清單
+            movieSelect.addEventListener("change", () => {
                 const movieId = movieSelect.value;
                 const theaterId = cinemaSelect.value;
-                const selectedDate = this.value;
+                if (!movieId || !theaterId) return;
+
+                toggleLoading(true);
+                dateSelect.disabled = true;
+                sessionSelect.disabled = true;
+                bookButton.disabled = true;
+
+                dateSelect.innerHTML = `<option value="">請選擇日期</option>`;
+                sessionSelect.innerHTML = `<option value="">請選擇場次</option>`;
+
+                fetchData(`/tickets/api/showtimes/?movie_id=${movieId}&theater_id=${theaterId}`, data => {
+                    const uniqueDates = [...new Set(data.showtimes.map(s => s.date))].sort();
+                    const dateOptions = uniqueDates.map(d => ({ id: d, name: d }));
+                    populateSelect(dateSelect, "請選擇日期", dateOptions, "id", "name");
+
+                    dateSelect.disabled = false;
+                }, () => toggleLoading(false)).finally(() => toggleLoading(false));
+            });
+
+            // 日期選擇後：抓取場次並排序時間
+            dateSelect.addEventListener("change", () => {
+                const movieId = movieSelect.value;
+                const theaterId = cinemaSelect.value;
+                const selectedDate = dateSelect.value;
 
                 if (!movieId || !selectedDate || !theaterId) return;
 
-                fetch(`/tickets/api/sessions/${theaterId}/${movieId}/${selectedDate}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        sessionSelect.innerHTML = `<option value="">請選擇場次</option>`;
-                        data.sessions.forEach(session => {
-                            sessionSelect.innerHTML += `<option value="${session.id}">${session.time}</option>`;
-                        });
-                    })
-                    .catch(error => console.error("載入場次失敗：", error));
+                sessionSelect.disabled = true;
+                bookButton.disabled = true;
+                sessionSelect.innerHTML = `<option value="">請選擇場次</option>`;
+
+                fetchData(`/tickets/api/sessions/${theaterId}/${movieId}/${selectedDate}/`, data => {
+                    const sortedSessions = data.sessions.sort((a, b) => a.time.localeCompare(b.time));
+                    populateSelect(sessionSelect, "請選擇場次", sortedSessions, "id", "time");
+
+                    sessionSelect.disabled = false;
+                });
             });
 
-            // **訂票按鈕**
-            sessionSelect.addEventListener("change", function () {
+            // 場次選擇後：開啟按鈕
+            sessionSelect.addEventListener("change", () => {
                 bookButton.disabled = !sessionSelect.value;
             });
 
-            bookButton.addEventListener("click", function () {
+            // 點擊按鈕導頁
+            bookButton.addEventListener("click", () => {
                 const showtimeId = sessionSelect.value;
                 if (!showtimeId) {
                     alert("請選擇完整資訊！");
@@ -222,13 +241,7 @@
                 window.location.href = `/tickets/select_tickets/${showtimeId}/`;
             });
         });
-    
+
     </script>
-    <style>
-        .navbar .dropdown-item:hover{
-            background-color:#007bff;
-            cokor:white;
-        }
-    </style>
 </body>
 </html>
