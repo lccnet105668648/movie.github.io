@@ -1,0 +1,626 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選擇票種</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 基本樣式 */
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .main-container {
+            padding: 30px 0;
+        }
+        
+        /* 面板樣式 */
+        .panel {
+            margin-bottom: 20px;
+            background-color: #fff;
+            border: 1px solid rgba(0,0,0,.125);
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+        }
+        
+        .panel-heading {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+        
+        .panel-title {
+            margin-top: 0;
+            margin-bottom: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .panel-body {
+            padding: 15px;
+        }
+        
+        /* 側邊欄樣式 */
+        .sidebar-container {
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        /* 會員專區和購物清單按鈕樣式 */
+        .btn-member-login {
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px 15px;
+            font-weight: 500;
+        }
+        
+        .btn-confirm-order {
+            width: 100%;
+            padding: 8px 15px;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+        
+        /* 票種選擇區域 */
+        .dark-translucent-bg {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        
+        .call-to-action {
+            padding: 15px 0;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        /* 票種項目樣式 */
+        .overlay-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+        
+        .overlay-container img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        
+        .overlay-to-top {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        /* 數量選擇按鈕樣式 */
+        .quantity-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        
+        .quantity-buttons button {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            transition: all 0.2s ease;
+        }
+        
+        .quantity-buttons button:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .quantity-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        /* 表格樣式 */
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .ticket-total {
+            font-weight: 600;
+            text-align: right;
+        }
+        
+        /* 電影信息樣式 */
+        .c-bg {
+            background-color: #ffc107;
+            color: #343a40;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+        
+        /* 底部按鈕 */
+        .bottom-actions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            border-radius: 0 0 4px 4px;
+            text-align: right;
+        }
+        
+        .btn-next {
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        /* 級別標籤 */
+        .abordered-class {
+            margin-bottom: 10px;
+        }
+        
+        /* 頁尾樣式 */
+        footer {
+            background-color: #343a40;
+            color: white;
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+        
+        /* 餐點區域按鈕 */
+        .btn-food-preorder {
+            margin-top: 10px;
+        }
+        
+        /* 響應式調整 */
+        @media (max-width: 991px) {
+            .sidebar-container {
+                position: static;
+                margin-bottom: 20px;
+            }
+        }
+
+        /* 隱藏優惠套票欄列的合計 */
+        .hidden-total {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <section class="main-container">
+        <div class="container">
+            <form action="/LiveTicket/Home/SelectSeats" autocomplete="off" method="post">
+                <div class="row">
+                    <!-- 主內容區 - 左側 -->
+                    <div class="col-lg-8">
+                        <!-- 電影信息 -->
+                        <div class="panel">
+                            <div class="panel-body">
+                                <div class="row">
+
+                                    <div class="col-sm-9 col-lg-7 col-md-6 col-xs-9" style="font-size: 1.2em; font-weight: bold;">
+                                        <h3><strong>{{ movie.title }}</strong></h3>
+                                        <p>場次時間：{{ showtime.show_date.date }} {{ showtime.time }}</p>
+                                        <p>電影院：{{ showtime.show_date.theater.name }}</p>
+                                    </div>
+                                    <div class="col-sm-12 col-lg-3 col-md-4 col-xs-12">
+                                        <div class="body text-center">
+                                            {% if movie.poster_url %}
+                                                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" style="width: 100px; height: auto; border-radius: 8px;">
+                                            {% else %}
+                                                <p>暫無圖片</p>
+                                            {% endif %}
+                                            <p class="text-primary mt-2" style="font-size: 1.2em; font-weight: bold;">
+                                                {{ movie.title }}
+                                            </p>
+                                            <p>{{ movie.description }}</p>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 選擇電影票 -->
+                        <div class="panel">
+                            <div class="panel-heading">
+                                <h4 class="panel-title"><i class="fa fa-ticket-alt me-2"></i> 選擇電影票</h4>
+                            </div>
+                            <div class="panel-body">
+                                <p class="mb-4">選擇您希望購買的電影票張數和類型。請注意系統將自動為您保留可訂的最佳座位，每筆交易最多可購買10張電影票</p>
+                                
+                                <div class="panel-group" id="accordion-4">
+                                    <!-- 票種部分 -->
+                                    <div class="panel">
+                                        <div class="panel-heading">
+                                            <h5 class="panel-title"><i class="fa fa-film me-2"></i> 優惠套票</h5>
+                                        </div>
+                                        <div class="panel-body">
+                                            <div class="table-responsive">
+                                                <table class="table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>票種</th>
+                                                            <th>價格</th>
+                                                            <th>數量</th>
+                                                            <th class="hidden-total">合計</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <!--第一種票-->
+                                                        <tr>
+                                                            <td>
+                                                                <div class="row">
+                                                                    <div class="col-lg-5 col-sm-6 col-xs-10">
+                                                                        <div class="overlay-container">
+                                                                            <img src="/static/img/food.png" alt="套票圖片">
+                                                                            <div class="overlay-to-top">
+                                                                                <p class="mb-0">票點影城豪華單人套票</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-lg-7 col-sm-6 col-xs-12">
+                                                                        <span class="fw-bold">票點影城單人套票</span><br>
+                                                                        <small class="text-info">套票內含一張電影票與 $690 餐飲券；套票隨附之餐飲券『僅限於電影場次當日』折抵使用，恕不找零。若有其它票種需求請洽影城現場(全票$950)。</small>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <span class="price">$<span class="realprice">1,300</span></span>
+                                                            </td>
+                                                            <td>
+                                                                <!-- 使用按鈕控制數量 -->
+                                                                <div class="quantity-buttons" data-ticket-id="HO000012610772">
+                                                                    <button type="button" class="btn decrement">
+                                                                        <i class="fa fa-minus"></i>
+                                                                    </button>
+                                                                    <div class="quantity-display">0</div>
+                                                                    <button type="button" class="btn increment">
+                                                                        <i class="fa fa-plus"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                            <td class="ticket-total hidden-total">0</td>
+                                                        </tr>
+                                                        <!--第二種票-->
+                                                        <tr>
+                                                            <td>
+                                                                <div class="row">
+                                                                    <div class="col-lg-5 col-sm-6 col-xs-10">
+                                                                        <div class="overlay-container">
+                                                                            <img src="/static/img/food.png" alt="套票圖片">
+                                                                            <div class="overlay-to-top">
+                                                                                <p class="mb-0">票點影城單人套票</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-lg-7 col-sm-6 col-xs-12">
+                                                                        <span class="fw-bold">單人套票</span><br>
+                                                                        <small class="text-info">1張電影票+1份中爆米花+1杯中杯飲料。</small>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <span class="price">$<span class="realprice">540</span></span>
+                                                            </td>
+                                                            <td>
+                                                                <!-- 使用按鈕控制數量 -->
+                                                                <div class="quantity-buttons" data-ticket-id="HO000012610772">
+                                                                    <button type="button" class="btn decrement">
+                                                                        <i class="fa fa-minus"></i>
+                                                                    </button>
+                                                                    <div class="quantity-display">0</div>
+                                                                    <button type="button" class="btn increment">
+                                                                        <i class="fa fa-plus"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                            <td class="ticket-total hidden-total">0</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 餐點區域 -->
+                        <div class="panel">
+                            <div class="panel-heading">
+                                <h4 class="panel-title"><i class="fa fa-utensils me-2"></i> 餐飲選擇</h4>
+                            </div>
+                            <div class="panel-body">
+                                <div class="row">
+                                    <!-- 可樂 -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100">
+                                            <div class="text-center p-3">
+                                                <img src="/static/img/coke.jpg" alt="大可樂" class="img-fluid" style="max-height: 200px;">
+                                                <h5 class="mt-3">可樂</h5>
+                                                <p class="text-danger fw-bold">$68</p>
+                                                <div class="quantity-buttons" data-item-id="large-cola">
+                                                    <button type="button" class="btn decrement">
+                                                        <i class="fa fa-minus"></i>
+                                                    </button>
+                                                    <div class="quantity-display">0</div>
+                                                    <button type="button" class="btn increment">
+                                                        <i class="fa fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 熱狗堡 -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100">
+                                            <div class="text-center p-3">
+                                                <img src="/static/img/hotdog.jpg" alt="熱狗堡" class="img-fluid" style="max-height: 200px;">
+                                                <h5 class="mt-3">熱狗堡</h5>
+                                                <p class="text-danger fw-bold">$149</p>
+                                                <div class="quantity-buttons" data-item-id="medium-cola">
+                                                    <button type="button" class="btn decrement">
+                                                        <i class="fa fa-minus"></i>
+                                                    </button>
+                                                    <div class="quantity-display">0</div>
+                                                    <button type="button" class="btn increment">
+                                                        <i class="fa fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 爆米花 -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100">
+                                            <div class="text-center p-3">
+                                                <img src="/static/img/popcorn.png" alt="爆米花" class="img-fluid" style="max-height: 200px;">
+                                                <h5 class="mt-3">爆米花</h5>
+                                                <p class="text-danger fw-bold">$136</p>
+                                                <div class="quantity-buttons" data-item-id="small-cola">
+                                                    <button type="button" class="btn decrement">
+                                                        <i class="fa fa-minus"></i>
+                                                    </button>
+                                                    <div class="quantity-display">0</div>
+                                                    <button type="button" class="btn increment">
+                                                        <i class="fa fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 底部按鈕 -->
+                        <div class="bottom-actions">
+                            <a id="btnDoNext" href="#" class="btn btn-success btn-next">
+                                選擇座位 <i class="fa fa-chair ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- 側邊欄 - 右側 -->
+                    <div class="col-lg-4">
+                        <div class="sidebar-container">
+                            <!-- 會員專區 -->
+                            <div class="panel">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title"><i class="fa fa-user me-2"></i> 會員專區</h4>
+                                </div>
+                                <div class="panel-body">
+                                    <p>尚未登入</p>
+                                    <p class="text-primary"><i class="fa fa-info-circle me-1"></i> <strong>請立即登入會員</strong></p>
+                                    <p>儲值金消費享會員票價及餐飲優惠</p>
+                                    <a href="{% url 'tickets:login' %}" class="btn btn-primary btn-member-login">
+                                        <i class="fa fa-sign-in-alt me-2"></i> 會員登入
+                                    </a>
+
+                                </div>
+                            </div>
+                            
+                            <!-- 購物清單 -->
+                            <div class="panel">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title"><i class="fa fa-shopping-cart me-2"></i> 購物清單</h4>
+                                </div>
+                                <div class="panel-body">
+                                    <table class="table" id="OrderInfo">
+                                        <thead>
+                                            <tr>
+                                                <th>商品名稱</th>
+                                                <th>數量</th>
+                                                <th>價格</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cartItems">
+                                            <!-- 購物清單項目將動態插入這裡 -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="2" class="text-end">合計</td>
+                                                <td><span id="spTotalPrice" class="fw-bold">0</span></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>    
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>在線選擇您喜愛的電影、場次和座位</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2025 票點影城 SPOTIXSHOW Cinemas. All Rights Reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log("DOM 已載入，準備初始化購票功能");
+
+            const totalPriceDisplay = document.getElementById('spTotalPrice');
+            const cartItems = document.getElementById('cartItems');
+            const nextButton = document.getElementById('btnDoNext');
+
+            function updateTotals() {
+                let totalPrice = 0;
+                let totalTickets = 0;
+                cartItems.innerHTML = ''; // 清空購物車
+
+                document.querySelectorAll('.panel .quantity-buttons').forEach(container => {
+                    const quantityEl = container.querySelector('.quantity-display');
+                    const row = container.closest('tr');
+                    const priceEl = row?.querySelector('.realprice');
+                    const totalEl = row?.querySelector('.ticket-total');
+                    const nameEl = row?.querySelector('.fw-bold');
+
+                    if (!quantityEl || !priceEl || !totalEl) return;
+
+                    const quantity = parseInt(quantityEl.textContent);
+                    const price = parseInt(priceEl.textContent.replace(/,/g, ''));
+                    const ticketName = nameEl?.textContent || '電影票';
+
+                    if (quantity > 0) {
+                        const itemTotal = quantity * price;
+                        totalPrice += itemTotal;
+                        totalTickets += quantity;
+                        totalEl.textContent = itemTotal.toLocaleString();
+
+                        const cartRow = document.createElement('tr');
+                        cartRow.innerHTML = `<td>${ticketName}</td><td>${quantity}</td><td>${itemTotal.toLocaleString()}</td>`;
+                        cartItems.appendChild(cartRow);
+                    } else {
+                        totalEl.textContent = '0';
+                    }
+                });
+
+                document.querySelectorAll('.card').forEach(card => {
+                    const quantityEl = card.querySelector('.quantity-display');
+                    const priceEl = card.querySelector('.text-danger');
+                    const nameEl = card.querySelector('h5');
+
+                    if (!quantityEl || !priceEl) return;
+
+                    const quantity = parseInt(quantityEl.textContent);
+                    const price = parseInt(priceEl.textContent.replace('$', ''));
+                    const itemName = nameEl?.textContent || '餐點';
+
+                    if (quantity > 0 && !isNaN(price)) {
+                        const itemTotal = quantity * price;
+                        totalPrice += itemTotal;
+
+                        const cartRow = document.createElement('tr');
+                        cartRow.innerHTML = `<td>${itemName}</td><td>${quantity}</td><td>${itemTotal.toLocaleString()}</td>`;
+                        cartItems.appendChild(cartRow);
+                    }
+                });
+
+                totalPriceDisplay.textContent = totalPrice.toLocaleString();
+
+                if (totalTickets > 0) {
+                    nextButton.classList.remove('disabled');
+                } else {
+                    nextButton.classList.add('disabled');
+                }
+
+            }
+
+            document.body.addEventListener('click', function (e) {
+                if (e.target.closest('.increment')) {
+                    const display = e.target.closest('.quantity-buttons').querySelector('.quantity-display');
+                    let quantity = parseInt(display.textContent);
+                    if (quantity < 10) {
+                        display.textContent = quantity + 1;
+                        updateTotals();
+                    }
+                }
+
+                if (e.target.closest('.decrement')) {
+                    const display = e.target.closest('.quantity-buttons').querySelector('.quantity-display');
+                    let quantity = parseInt(display.textContent);
+                    if (quantity > 0) {
+                        display.textContent = quantity - 1;
+                        updateTotals();
+                    }
+                }
+            });
+
+            nextButton.addEventListener('click', function (e) {
+                if (nextButton.classList.contains('disabled')) {
+                    console.log("按鈕被禁用，不能跳轉");
+                    e.preventDefault();
+                    return;
+                }
+
+                e.preventDefault();
+                const total = parseInt(totalPriceDisplay.textContent.replace(/,/g, '')) || 0;
+                const currentUrl = window.location.href;
+                const match = currentUrl.match(/select_tickets\/(\d+)\//);
+                const showtimeId = match ? match[1] : "1";
+
+                const nextUrl = new URL(`/tickets/select_seats/${showtimeId}/`, window.location.origin);
+                nextUrl.searchParams.set('total_price', total);
+
+                console.log("跳轉至座位頁 with total_price:", total);
+                window.location.href = nextUrl.toString();
+            });
+
+
+            updateTotals();
+        });
+
+        </script>
+
+</body>
+</html>
